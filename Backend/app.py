@@ -174,5 +174,51 @@ def login_user():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ---SYNC ROUTE: Frontend se offline data yahan aayega ---
+@app.route('/api/sync/patients', methods=['POST'])
+def sync_patients():
+    try:
+        data = request.get_json()
+        # Agar frontend se {patients: [...]} format mein aaye toh use handle karein
+        patients_list = data.get('patients') if isinstance(data, dict) else data
+        
+        if not isinstance(patients_list, list):
+            return jsonify({"status": "error", "message": "Expected a list of patients"}), 400
+
+        synced_count = 0
+        for patient in patients_list:
+            aadhaar = patient.get('aadhaar')
+            if not aadhaar: continue
+            
+            # MongoDB _id conflict se bachne ke liye 
+            patient.pop('_id', None) 
+            
+            # Metadata add karein
+            patient['synced_at'] = datetime.datetime.utcnow()
+            
+            # Upsert: Agar Aadhaar match hua toh update, warna insert 
+            patients_col.update_one(
+                {"aadhaar": aadhaar},
+                {"$set": patient},
+                upsert=True
+            )
+            synced_count += 1
+
+        return jsonify({"status": "success", "message": f"{synced_count} patients synced"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- SEARCH ROUTE: AddPatient mein auto-fill ke liye ---
+@app.route('/api/patients/search/<aadhaar>', methods=['GET'])
+def search_patient(aadhaar):
+    try:
+        # Aadhaar ke basis par patient dhundo 
+        patient = patients_col.find_one({"aadhaar": aadhaar}, {"_id": 0})
+        if patient:
+            return jsonify({"status": "success", "patient": patient}), 200
+        return jsonify({"status": "error", "message": "Patient not found"}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

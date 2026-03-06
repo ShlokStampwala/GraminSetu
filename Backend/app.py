@@ -179,7 +179,6 @@ def login_user():
 def sync_patients():
     try:
         data = request.get_json()
-        # Agar frontend se {patients: [...]} format mein aaye toh use handle karein
         patients_list = data.get('patients') if isinstance(data, dict) else data
         
         if not isinstance(patients_list, list):
@@ -190,21 +189,32 @@ def sync_patients():
             aadhaar = patient.get('aadhaar')
             if not aadhaar: continue
             
-            # MongoDB _id conflict se bachne ke liye 
-            patient.pop('_id', None) 
+            # Frontend se bheja hua naya checkup entry
+            new_checkup = patient.get('newEntry')
             
-            # Metadata add karein
-            patient['synced_at'] = datetime.datetime.utcnow()
-            
-            # Upsert: Agar Aadhaar match hua toh update, warna insert 
+            # MongoDB _id conflict se bachne ke liye
+            patient.pop('_id', None)
+            patient.pop('newEntry', None) # Alag se handle karenge
+
+            # 🚀 SMART HISTORY LOGIC:
+            # 1. Permanent details ko update karein ($set)
+            # 2. Naye checkup ko history array mein add karein ($push)
             patients_col.update_one(
                 {"aadhaar": aadhaar},
-                {"$set": patient},
+                {
+                    "$set": {
+                        "name": patient.get('name'),
+                        "dob": patient.get('dob'),
+                        "gender": patient.get('gender'),
+                        "last_synced": datetime.datetime.utcnow()
+                    },
+                    "$push": { "history": new_checkup } # ✅ History array mein append hoga
+                },
                 upsert=True
             )
             synced_count += 1
 
-        return jsonify({"status": "success", "message": f"{synced_count} patients synced"}), 200
+        return jsonify({"status": "success", "message": f"{synced_count} records synced with history"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

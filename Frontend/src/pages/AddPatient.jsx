@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useTranslation } from "react-i18next";
-import predictHeartRisk from "../edge_model"; 
-import { validateAadhaar } from "../utils/aadhaarValidation"; 
-import { 
-  CheckCircle2, AlertCircle, Search, Save, UserPlus, 
-  Cigarette, GlassWater, Activity 
-} from "lucide-react";
+import { useModel } from "../hooks/useModel";
+import { validateAadhaar } from "../utils/aadhaarValidation";
+import { CheckCircle2, AlertCircle, Save, Cigarette, GlassWater, Activity } from "lucide-react";
 
 export default function AddPatient() {
   const navigate = useNavigate();
@@ -16,43 +13,45 @@ export default function AddPatient() {
   const [isAadhaarValid, setIsAadhaarValid] = useState(null);
   const [showFullForm, setShowFullForm] = useState(false);
 
+  const { initialize, predict, isReady, isLoading: modelLoading, hasError: modelError } = useModel();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   const [formData, setFormData] = useState({
-    name: "", aadhaar: "", age: "", gender: "1",
+    name: "", aadhaar: "", dob: "", gender: "1",
     height: "", weight: "", ap_hi: "", ap_lo: "",
     glucose_mg: "", cholesterol_mg: "",
     is_fasting: false, smoke: "0", alco: "0", active: "1"
   });
 
-  // 1. AADHAAR VALIDATION & SMART AUTO-FILL
   const handleAadhaarInput = async (e) => {
     const val = e.target.value.replace(/\s/g, "");
     if (val.length <= 12 && /^\d*$/.test(val)) {
       setFormData({ ...formData, aadhaar: val });
-
       if (val.length === 12) {
         const isValid = validateAadhaar(val);
         setIsAadhaarValid(isValid);
-
         if (isValid) {
           setShowFullForm(true);
-          // Auto-Search if online
           if (navigator.onLine) {
             try {
               const res = await fetch(`http://localhost:5000/api/patients/search/${val}`);
               const data = await res.json();
               if (res.ok && data.patient) {
-                setFormData(prev => ({ ...prev, ...data.patient }));
+                setFormData(prev => ({
+                  ...prev,
+                  name: data.patient.name || "",
+                  dob: data.patient.dob || "",
+                  gender: data.patient.gender || "1"
+                }));
                 alert("Existing Patient Found! Data auto-filled.");
               }
-            } catch (err) { console.log("Search failed or offline"); }
+            } catch (err) { console.log("Search failed"); }
           }
-        } else {
-          setShowFullForm(false);
         }
-      } else {
-        setIsAadhaarValid(null);
-        setShowFullForm(false);
-      }
+      } else { setIsAadhaarValid(null); setShowFullForm(false); }
     }
   };
 
@@ -61,60 +60,71 @@ export default function AddPatient() {
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
-  // 2. AI RISK ANALYSIS & NAVIGATION LOGIC
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isAadhaarValid) return alert("Please enter a valid Aadhaar number first.");
+    if (!isReady) return alert("Please wait, AI Model is still loading...");
     setLoading(true);
 
     try {
-      // Data Processing for AI
-      const ageInDays = parseFloat(formData.age) * 365.25;
+      // Glucose categorization (clinical thresholds)
       let glucCat = 1;
       const sugar = parseFloat(formData.glucose_mg);
-      if (formData.is_fasting) {
-        if (sugar > 125) glucCat = 3; else if (sugar > 100) glucCat = 2;
-      } else {
-        if (sugar >= 200) glucCat = 3; else if (sugar > 140) glucCat = 2;
+      if (!isNaN(sugar)) {
+        if (formData.is_fasting) {
+          if (sugar > 125) glucCat = 3;
+          else if (sugar >= 100) glucCat = 2;
+        } else {
+          if (sugar >= 200) glucCat = 3;
+          else if (sugar >= 140) glucCat = 2;
+        }
       }
-      
+
+      // Cholesterol categorization
       let cholCat = 1;
-      const chol = parseFloat(formData.cholesterol_mg);
-      if (chol >= 240) cholCat = 3; else if (chol >= 200) cholCat = 2;
+      if (formData.cholesterol_mg) {
+        const chol = parseFloat(formData.cholesterol_mg);
+        if (!isNaN(chol)) cholCat = chol >= 240 ? 3 : chol >= 200 ? 2 : 1;
+      }
 
-      const inputData = [
-        ageInDays, parseInt(formData.gender), parseFloat(formData.height),
-        parseFloat(formData.weight), parseFloat(formData.ap_hi), parseFloat(formData.ap_lo),
-        cholCat, glucCat, parseInt(formData.smoke), parseInt(formData.alco), parseInt(formData.active)
-      ];
+      // Run prediction — hook handles all 24 feature engineering internally
+      const analysisResult = await predict({
+        ...formData,
+        gluc: glucCat,
+        cholesterol: cholCat,
+        gender: parseInt(formData.gender),
+        weight: parseFloat(formData.weight),
+        height: parseFloat(formData.height),
+        ap_hi: parseFloat(formData.ap_hi),
+        ap_lo: parseFloat(formData.ap_lo),
+        smoke: parseInt(formData.smoke),
+        alco: parseInt(formData.alco),
+        active: parseInt(formData.active),
+      });
 
-      // Run AI Model
-      const scores = predictHeartRisk(inputData);
-      const riskVal = Array.isArray(scores) ? scores[1] : scores;
-      const riskResult = riskVal > 0.5 ? "High" : "Low";
-
-      // ✅ SAHI FORMAT: Results object zaroori hai analysis page ke liye
       const patientRecord = {
         ...formData,
         results: {
-          heartRisk: riskVal,
-          obesityRisk: (parseFloat(formData.weight) / ((parseFloat(formData.height)/100)**2) >= 30) ? 0.85 : 0.20,
-          diabetesRisk: (glucCat >= 2) ? 0.90 : 0.15
+          heartRisk:    analysisResult.heart_attack.probability,
+          obesityRisk:  analysisResult.obesity.probability,
+          diabetesRisk: analysisResult.diabetes.probability,
         },
-        riskResult,
-        riskProbability: (riskVal * 100).toFixed(1),
-        timestamp: new Date().toISOString(),
-        synced: false
+        calculated: analysisResult._calculated,
+        newEntry: {
+          date:    new Date().toISOString().split('T')[0],
+          vitals:  { ...formData, glucCat, cholCat },
+          results: analysisResult,
+        },
+        synced: false,
       };
 
-      // Save locally for offline support
-      const existing = JSON.parse(localStorage.getItem("offline_patients") || "[]");
-      localStorage.setItem("offline_patients", JSON.stringify([...existing, patientRecord]));
-      
-      // Navigate with full state object
+      localStorage.setItem("latest_analysis", JSON.stringify(patientRecord));
+      const local = JSON.parse(localStorage.getItem("offline_patients") || "[]");
+      localStorage.setItem("offline_patients", JSON.stringify([...local, patientRecord]));
+
       navigate(`/analysis/${formData.aadhaar}`, { state: patientRecord });
     } catch (err) {
-      alert("Error in AI Analysis.");
+      console.error("Prediction Error:", err);
+      alert("Analysis failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -123,90 +133,95 @@ export default function AddPatient() {
   return (
     <div className="bg-slate-50 min-h-screen font-sans">
       <Navbar />
-      <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
-              Patient <span className="text-emerald-600">Entry</span>
-            </h1>
-            <p className="text-slate-500 font-medium text-sm sm:text-base">{t('welcome')}</p>
+      <div className="w-full max-w-5xl mx-auto p-4 sm:p-8">
+
+        {/* Model status banner */}
+        {modelLoading && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-2xl text-blue-700 text-xs font-bold text-center animate-pulse">
+            🤖 AI Model loading...
           </div>
-          <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 hidden sm:block">
-             <UserPlus className="text-emerald-600" size={32} />
+        )}
+        {modelError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs font-bold text-center">
+            ❌ Model load failed — check /public/models/ folder
           </div>
+        )}
+
+        {/* Step 1: Aadhaar Entry */}
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border mb-6">
+          <label className="block text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest italic tracking-tighter">{t('E-aadhaar')}</label>
+          <input
+            type="text"
+            value={formData.aadhaar}
+            onChange={handleAadhaarInput}
+            placeholder={t('aadhaar')}
+            className={`w-full p-4 rounded-2xl text-xl font-black border-4 transition-all ${
+              isAadhaarValid === true  ? 'border-emerald-500 bg-emerald-50 text-emerald-900' :
+              isAadhaarValid === false ? 'border-red-500 bg-red-50 text-red-900' :
+              'border-slate-100 bg-slate-50 text-slate-400'
+            }`}
+          />
         </div>
 
-        {/* Aadhaar Input Box */}
-        <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200 mb-6 transition-all">
-          <label className="block text-[10px] font-black uppercase text-slate-400 mb-3 tracking-[0.2em]">Step 1: Identity Verification</label>
-          <div className="relative">
-            <input
-              type="text" value={formData.aadhaar} onChange={handleAadhaarInput} placeholder="12 Digit Aadhaar"
-              className={`w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl text-xl sm:text-2xl font-black tracking-widest outline-none transition-all border-4 ${
-                isAadhaarValid === true ? 'border-emerald-500 bg-emerald-50 text-emerald-900' : 
-                isAadhaarValid === false ? 'border-red-500 bg-red-50 text-red-900' : 'border-slate-100 bg-slate-50 text-slate-400'
-              }`}
-            />
-            <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2">
-              {isAadhaarValid === true && <CheckCircle2 className="text-emerald-500 w-6 h-6 sm:w-8 sm:h-8" />}
-              {isAadhaarValid === false && <AlertCircle className="text-red-500 w-6 h-6 sm:w-8 sm:h-8" />}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Form Details (Conditional) */}
         {showFullForm && (
-          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-              <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+
+              {/* Personal Details */}
+              <div className="bg-white p-8 rounded-[2rem] border shadow-sm space-y-6 flex flex-col justify-center">
                 <h3 className="font-black text-emerald-800 uppercase text-[10px] tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-lg">Personal Details</h3>
-                <CustomInput label={t('name')} name="name" value={formData.name} placeholder="Full Name" onChange={handleChange} />
+                <CustomInput label={t('name')} name="name" value={formData.name} onChange={handleChange} />
                 <div className="grid grid-cols-2 gap-4">
-                  <CustomInput label={t('age')} name="age" value={formData.age} type="number" onChange={handleChange} />
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">{t('gender')}</label>
-                    <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50 font-bold outline-none text-sm">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{t('dob')}</label>
+                    <input type="date" name="dob" value={formData.dob} onChange={handleChange} required
+                      className="w-full p-4 border-2 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{t('gender')}</label>
+                    <select name="gender" value={formData.gender} onChange={handleChange}
+                      className="w-full p-4 border-2 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-500">
                       <option value="1">{t('female')}</option>
                       <option value="2">{t('male')}</option>
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <CustomInput label={t('height') + " (cm)"} name="height" value={formData.height} type="number" onChange={handleChange} />
-                  <CustomInput label={t('weight') + " (kg)"} name="weight" value={formData.weight} type="number" onChange={handleChange} />
-                </div>
               </div>
 
-              <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200 space-y-5">
-                <h3 className="font-black text-emerald-800 uppercase text-[10px] tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-lg">Vitals & Clinical</h3>
+              {/* Reports */}
+              <div className="bg-white p-8 rounded-[2rem] border shadow-sm space-y-6 flex flex-col justify-center">
+                <h3 className="font-black text-emerald-800 uppercase text-[10px] tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-lg">Reports</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <CustomInput label={t('bp_high')} name="ap_hi" value={formData.ap_hi} type="number" onChange={handleChange} />
                   <CustomInput label={t('bp_low')} name="ap_lo" value={formData.ap_lo} type="number" onChange={handleChange} />
+                  <CustomInput label={t('weight')} name="weight" value={formData.weight} type="number" onChange={handleChange} />
+                  <CustomInput label={t('height')} name="height" value={formData.height} type="number" onChange={handleChange} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <CustomInput label={t('sugar')} name="glucose_mg" value={formData.glucose_mg} type="number" onChange={handleChange} />
-                  <CustomInput label={t('cholesterol')} name="cholesterol_mg" value={formData.cholesterol_mg} type="number" onChange={handleChange} />
+                  <CustomInput label={t('cholesterol') + " (Optional)"} name="cholesterol_mg" value={formData.cholesterol_mg} type="number" onChange={handleChange} required={false} />
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border-2 border-emerald-100">
-                  <input type="checkbox" name="is_fasting" checked={formData.is_fasting} id="fasting" onChange={handleChange} className="h-5 w-5 accent-emerald-600 cursor-pointer" />
-                  <label htmlFor="fasting" className="text-xs font-bold text-emerald-900 leading-tight">Patient is Fasting</label>
+                <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <input type="checkbox" name="is_fasting" checked={formData.is_fasting} onChange={handleChange}
+                    className="h-5 w-5 accent-emerald-600 cursor-pointer" />
+                  <label className="text-sm font-bold text-emerald-900 italic tracking-tighter">{t('fasting_check')}</label>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200">
-              <h3 className="font-black text-emerald-800 uppercase text-[10px] tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-lg mb-6">Lifestyle Factors</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <LifestyleSelect label={t('smoke')} name="smoke" value={formData.smoke} icon={<Cigarette size={16}/>} onChange={handleChange} />
-                <LifestyleSelect label={t('alco')} name="alco" value={formData.alco} icon={<GlassWater size={16}/>} onChange={handleChange} />
-                <LifestyleSelect label="Physical Activity" name="active" value={formData.active} icon={<Activity size={16}/>} onChange={handleChange} />
+            {/* Health Habits */}
+            <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
+              <h3 className="font-black text-emerald-800 uppercase text-[10px] tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-lg mb-6 tracking-tighter">Health Habits</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <LifestyleSelect label={t('smoke')} name="smoke" value={formData.smoke} icon={<Cigarette size={16} />} onChange={handleChange} />
+                <LifestyleSelect label={t('alco')} name="alco" value={formData.alco} icon={<GlassWater size={16} />} onChange={handleChange} />
+                <LifestyleSelect label={t('active')} name="active" value={formData.active} icon={<Activity size={16} />} onChange={handleChange} />
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white p-5 sm:p-6 rounded-2xl sm:rounded-[1.8rem] font-black text-lg sm:text-xl shadow-2xl hover:bg-emerald-600 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
-              {loading ? "Processing..." : <><Save size={20}/> Run Risk Analysis</>}
+            <button type="submit" disabled={loading || !isReady}
+              className="w-full bg-slate-900 text-white p-6 rounded-[1.8rem] font-black text-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 italic uppercase shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              {loading ? t('loading') : <><Save size={20} /> {t('submit_btn')}</>}
             </button>
           </form>
         )}
@@ -215,20 +230,22 @@ export default function AddPatient() {
   );
 }
 
-function CustomInput({ label, name, value, type = "text", placeholder, onChange }) {
+function CustomInput({ label, name, value, type = "text", onChange, required = true }) {
   return (
-    <div className="w-full">
-      <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-1 tracking-wider">{label}</label>
-      <input name={name} type={type} value={value} placeholder={placeholder} onChange={onChange} required className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50 focus:border-emerald-500 font-bold text-slate-800 text-sm" />
+    <div className="space-y-1 w-full">
+      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-tight">{label}</label>
+      <input name={name} type={type} value={value} onChange={onChange} required={required}
+        className="w-full p-4 border-2 rounded-xl font-bold outline-none bg-slate-50 focus:border-emerald-500 transition-all text-slate-800" />
     </div>
   );
 }
 
 function LifestyleSelect({ label, name, value, icon, onChange }) {
   return (
-    <div className="w-full">
-      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">{icon} {label}</label>
-      <select name={name} value={value} onChange={onChange} className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50 font-bold outline-none text-sm cursor-pointer">
+    <div className="space-y-1">
+      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase ml-1 tracking-tighter">{icon} {label}</label>
+      <select name={name} value={value} onChange={onChange}
+        className="w-full p-4 border-2 rounded-xl bg-slate-50 font-bold cursor-pointer focus:border-emerald-500 outline-none text-slate-800">
         <option value="0">No / Inactive</option>
         <option value="1">Yes / Active</option>
       </select>

@@ -11,6 +11,7 @@ export const resources = {
       "name": "Patient Name",
       "asha_name": "ASHA Worker Name",
       "aadhaar": "Aadhaar Number",
+      "E-aadhaar": "Enter Aadhaar Number",
       "phone": "Mobile Number",
       "password": "Password",
       "village": "Village Name",
@@ -94,7 +95,17 @@ export const resources = {
       "ASHA": "ASHA Worker",
       "Doctor": "Doctor",
       "Medical": "Medical Store",
-      "Request Sent Successfully!": "Request Sent Successfully!"
+      "Request Sent Successfully!": "Request Sent Successfully!",
+      "dob": "Date of Birth",
+      "history_title": "Patient Health History",
+      "obesity_risk": "Obesity Risk",
+      "diabetes_risk": "Diabetes Risk",
+      "heart_risk": "Heart Risk",
+      "overall_risk": "Overall Health Score",
+      "action_required": "Action Required",
+      "system_normal": "System Normal",
+      "last_visit": "Last Visit",
+      "vitals_summary": "Vitals Summary"
     }
   },
   hi: {
@@ -107,6 +118,7 @@ export const resources = {
       "name": "मरीज का नाम",
       "asha_name": "आशा वर्कर का नाम",
       "aadhaar": "आधार नंबर",
+      "E-aadhaar": "आधार नंबर डालें",
       "phone": "मोबाइल नंबर",
       "password": "पासवर्ड",
       "village": "गाँव का नाम",
@@ -190,7 +202,17 @@ export const resources = {
       "ASHA": "आशा कार्यकर्ता",
       "Doctor": "डॉक्टर",
       "Medical": "मेडिकल स्टोर",
-      "Request Sent Successfully!": "अनुरोध सफलतापूर्वक भेजा गया!"
+      "Request Sent Successfully!": "अनुरोध सफलतापूर्वक भेजा गया!",
+      "dob": "जन्म तिथि",
+      "history_title": "मरीज का स्वास्थ्य इतिहास",
+      "obesity_risk": "मोटापे का जोखिम",
+      "diabetes_risk": "मधुमेह का जोखिम",
+      "heart_risk": "हृदय जोखिम",
+      "overall_risk": "कुल स्वास्थ्य स्कोर",
+      "action_required": "कार्रवाई आवश्यक",
+      "system_normal": "स्वास्थ्य सामान्य",
+      "last_visit": "पिछली जांच",
+      "vitals_summary": "वाइटल्स सारांश"
     }
   },
   gu: {
@@ -203,6 +225,7 @@ export const resources = {
       "name": "દર્દીનું નામ",
       "asha_name": "આશા કાર્યકરનું નામ",
       "aadhaar": "આધાર નંબર",
+      "E-aadhaar": "આધાર નંબર નાખો",
       "phone": "મોબાઇલ નંબર",
       "password": "પાસવર્ડ",
       "village": "ગામ નું નામ",
@@ -286,7 +309,17 @@ export const resources = {
       "ASHA": "આશા વર્કર",
       "Doctor": "ડોક્ટર",
       "Medical": "મેડિકલ સ્ટોર",
-      "Request Sent Successfully!": "વિનંતી સફળતાપૂર્વક મોકલવામાં આવી!"
+      "Request Sent Successfully!": "વિનંતી સફળતાપૂર્વક મોકલવામાં આવી!",
+      "dob": "જન્મ તારીખ",
+      "history_title": "દર્દીનો સ્વાસ્થ્ય ઇતિહાસ",
+      "obesity_risk": "મેદસ્વીતાનું જોખમ",
+      "diabetes_risk": "ડાયાબિટીસનું જોખમ",
+      "heart_risk": "હૃદયનું જોખમ",
+      "overall_risk": "કુલ આરોગ્ય સ્કોર",
+      "action_required": "તાત્કાલિક પગલાં જરૂરી",
+      "system_normal": "આરોગ્ય સામાન્ય છે",
+      "last_visit": "છેલ્લી મુલાકાત",
+      "vitals_summary": "વાઇટલ્સ સારાંશ"
     
   }
     }

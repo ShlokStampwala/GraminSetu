@@ -15,11 +15,11 @@ doctor_col = db['Doctor']
 medical_col = db['MedicalStore']
 patients_col = db['Patients']
 requests_col = db['PendingRequests']
-admin_col = db['Admins']  # Naya collection for Regional Admins
+admin_col = db['Admins']  # New collection for Regional Admins
 
 AUTHORIZED_MASTER_KEY = "CVMU2026"
 
-# --- SUPER ADMIN SEEDING (Hardcoded for Security) ---
+# --- SUPER ADMIN---
 SUPER_ADMIN_EMAIL = "superadmin@gs.com"
 SUPER_ADMIN_PASS = "admin2026"
 
@@ -88,7 +88,7 @@ def create_regional_admin():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 4. User Approval Logic (With Clean Schema)
+# 4. User Approval Logic
 @app.route('/api/admin/approve', methods=['POST'])
 def approve_user():
     try:
@@ -142,7 +142,7 @@ def approve_user():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 5. Get Requests (Filtered for Regional Admins)
+# 5. Get Requests
 @app.route('/api/admin/requests', methods=['GET'])
 def get_admin_requests():
     taluka = request.args.get('taluka')
@@ -174,7 +174,7 @@ def login_user():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ---SYNC ROUTE: Frontend se offline data yahan aayega ---
+# SYNC ROUTE:
 @app.route('/api/sync/patients', methods=['POST'])
 def sync_patients():
     try:
@@ -189,16 +189,16 @@ def sync_patients():
             aadhaar = patient.get('aadhaar')
             if not aadhaar: continue
             
-            # Frontend se bheja hua naya checkup entry
+            # New checkup entry from frontend
             new_checkup = patient.get('newEntry')
             
-            # MongoDB _id conflict se bachne ke liye
+            # handle permenant details update and history separately
             patient.pop('_id', None)
-            patient.pop('newEntry', None) # Alag se handle karenge
+            patient.pop('newEntry', None) 
 
-            # 🚀 SMART HISTORY LOGIC:
-            # 1. Permanent details ko update karein ($set)
-            # 2. Naye checkup ko history array mein add karein ($push)
+            # SMART HISTORY LOGIC
+            # 1 Permanent details ($set)
+            # 2 New checkup ($push)
             patients_col.update_one(
                 {"aadhaar": aadhaar},
                 {
@@ -208,7 +208,7 @@ def sync_patients():
                         "gender": patient.get('gender'),
                         "last_synced": datetime.datetime.utcnow()
                     },
-                    "$push": { "history": new_checkup } # ✅ History array mein append hoga
+                    "$push": { "history": new_checkup } # append in history
                 },
                 upsert=True
             )
@@ -218,15 +218,34 @@ def sync_patients():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- SEARCH ROUTE: AddPatient mein auto-fill ke liye ---
+# SEARCH ROUTE: for aadhaar
 @app.route('/api/patients/search/<aadhaar>', methods=['GET'])
 def search_patient(aadhaar):
     try:
-        # Aadhaar ke basis par patient dhundo 
+        # Find through aadhar  
         patient = patients_col.find_one({"aadhaar": aadhaar}, {"_id": 0})
         if patient:
             return jsonify({"status": "success", "patient": patient}), 200
         return jsonify({"status": "error", "message": "Patient not found"}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+# SEARCH ROUTE: for aadhaar
+@app.route('/api/patient/<aadhaar>', methods=['GET'])
+def get_patient_details(aadhaar):
+    try:
+        patient = patients_col.find_one({"aadhaar": aadhaar}, {"_id": 0})
+
+        if not patient:
+            return jsonify({"status": "error", "message": "Patient not found"}), 404
+
+        if "history" not in patient:
+            patient["history"] = []
+
+        if "prescriptions" not in patient:
+            patient["prescriptions"] = []
+
+        return jsonify(patient), 200
+
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

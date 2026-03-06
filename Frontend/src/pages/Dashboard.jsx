@@ -30,7 +30,7 @@ export default function Dashboard() {
       const localData = JSON.parse(localStorage.getItem("offline_patients") || "[]");
       setStats({
         total: localData.length,
-        // Yahan Heart, Obesity ya Diabetes mein se koi bhi high ho toh count karega
+      
         highRisk: localData.filter(p => 
           p.riskResult === "High" || 
           p.results?.heartRisk > 0.5 || 
@@ -46,7 +46,7 @@ export default function Dashboard() {
       const localData = JSON.parse(localStorage.getItem("offline_patients") || "[]");
       const pendingData = localData.filter(p => !p.synced);
       
-      // Automatic sync when network is back
+    
       if (pendingData.length > 0 && navigator.onLine) {
         setIsSyncing(true);
         try {
@@ -66,8 +66,8 @@ export default function Dashboard() {
     };
 
     loadData();
-    window.addEventListener('online', handleAutoSync); // Network aate hi sync
-    if (navigator.onLine) handleAutoSync(); // Component load hote hi sync check
+    window.addEventListener('online', handleAutoSync);
+    if (navigator.onLine) handleAutoSync(); 
     return () => window.removeEventListener('online', handleAutoSync);
   }, []);
 
@@ -94,7 +94,7 @@ export default function Dashboard() {
       <Navbar />
       <div className="min-h-screen bg-slate-50 p-6 space-y-8">
         
-        {/* Header - Wahi purana layout */}
+        {/* Header -old */}
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t('welcome')}, {ashaInfo.name}</h1>
@@ -107,7 +107,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Sync Banner - Purana look with Auto-Sync logic */}
+        {/* Sync Banner */}
         <div className="max-w-7xl mx-auto">
           <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-3xl flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* KPI Cards - Purana Look */}
+        {/* KPI Cards*/}
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KpiCard title={t('total_patients')} value={stats.total} trend={t('month_growth')} icon={<Users />} accent="emerald" />
           <KpiCard title={t('high_risk_patients')} value={stats.highRisk} trend={t('critical_count')} icon={<AlertTriangle />} accent="red" />
@@ -133,7 +133,7 @@ export default function Dashboard() {
           <KpiCard title={t('community_alerts')} value="3" trend={t('seasonal_rise')} icon={<Bell />} accent="blue" />
         </div>
 
-        {/* Quick Actions - Purana Look */}
+        {/* Quick Actions*/}
         <div className="max-w-7xl mx-auto space-y-4">
           <h2 className="text-xl font-black text-slate-800 uppercase ml-1 tracking-tighter">{t('quick_actions')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -147,7 +147,7 @@ export default function Dashboard() {
   );
 }
 
-// Sub-components as provided in your original code
+// Sub-components
 function KpiCard({ title, value, trend, icon, accent }) {
   const accentMap = { 
     emerald: "from-emerald-500/10 border-emerald-100 text-emerald-600", 

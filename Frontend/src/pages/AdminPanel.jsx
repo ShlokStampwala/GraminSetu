@@ -10,12 +10,12 @@ const AdminPanel = () => {
   const [users, setUsers] = useState([]); 
   const [verifiedUsers, setVerifiedUsers] = useState([]);
   
-  // Login ke baad localStorage se data uthayenge
+  //  After Login role and taluka fetch 
   const adminRole = localStorage.getItem('adminRole') || 'super'; // 'super' or 'regional'
   const adminTaluka = localStorage.getItem('adminTaluka') || '';
   const adminName = localStorage.getItem('adminName') || 'Master Admin';
 
-  // Regional Admin banane ke liye form state
+  // Regional Admin adding
   const [newAdmin, setNewAdmin] = useState({
     name: '', email: '', password: '', taluka: '', district: ''
   });
@@ -29,7 +29,7 @@ const AdminPanel = () => {
       const data = await res.json();
       if (res.ok) setUsers(data);
 
-      // Note: Aap ek similar route 'Verified Users' ke liye bhi bana sakte ho
+    
     } catch (err) {
       console.error("Backend offline or connection error.");
     }

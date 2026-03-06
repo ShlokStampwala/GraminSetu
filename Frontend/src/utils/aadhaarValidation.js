@@ -1,5 +1,3 @@
-// D:/Hackathons/CVMU 4.0/GraminSetu_FInal/Frontend/src/utils/aadhaarValidation.js
-
 const d = [
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 6, 7, 8, 9, 5],
     [2, 3, 4, 0, 1, 7, 8, 9, 5, 6], [3, 4, 0, 1, 2, 8, 9, 5, 6, 7],

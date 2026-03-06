@@ -14,22 +14,22 @@ import AadhaarTest from "./pages/AadhaarTest";
 
 // Naye Modules
 import AdminPanel from "./pages/AdminPanel";
-import AdminLogin from "./pages/AdminLogin"; // 👈 Naya Admin Login Page
+import AdminLogin from "./pages/AdminLogin"; // Admin login page
 import MedicalDashboard from "./pages/MedicalDashboard";
 
-// Role-Based Protected Route logic
+// Role-Based Protected 
 const ProtectedRoute = ({ children, allowedRole }) => {
-  // Admin ke liye alag check aur User ke liye alag
+  // for admin
   const isAdminLoggedIn = localStorage.getItem("adminRole") !== null;
   const isUserLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   const userRole = localStorage.getItem("role");
 
-  // Agar Admin route hai toh admin check karo
+  //for super admin
   if (allowedRole === "admin") {
     return isAdminLoggedIn ? children : <Navigate to="/admin-auth-portal" replace />;
   }
 
-  // Users (ASHA/Doctor/Medical) ke liye check
+  // Users (ASHA/Doctor/Medical) 
   if (!isUserLoggedIn) {
     return <Navigate to="/login" replace />;
   }

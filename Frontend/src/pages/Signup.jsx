@@ -25,7 +25,6 @@ export default function Signup() {
     "Uttar Pradesh", "Uttarakhand", "West Bengal"
   ];
 
-  // 🌐 3-Language Toggle Logic
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
   };
@@ -56,7 +55,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center py-12 px-6">
       
-      {/* 🌐 3-Language Switcher (Top Right) */}
+      {/* 🌐 3-Language Switcher */}
       <div className="fixed top-6 right-6 flex bg-white border-2 border-slate-800 rounded-2xl p-1 shadow-lg z-50">
         {[
           { code: 'en', label: 'EN' },
@@ -76,7 +75,6 @@ export default function Signup() {
       </div>
 
       <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl p-8 md:p-12 border border-slate-200 relative overflow-hidden">
-        
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[5rem] -z-10" />
 
         <div className="text-center mb-10">
@@ -117,20 +115,16 @@ export default function Signup() {
             </div>
             <div className="flex-1">
               <label className="text-[10px] uppercase text-amber-600 block mb-1">{t('Authorization Key')}</label>
-              <input 
-                name="masterKey" 
-                placeholder={t('Enter Master Key')} 
-                onChange={handleChange} 
-                className="w-full bg-transparent outline-none text-slate-800 placeholder:text-amber-200" 
-                required 
-              />
+              <input name="masterKey" placeholder={t('Enter Master Key')} onChange={handleChange} className="w-full bg-transparent outline-none text-slate-800 placeholder:text-amber-200" required />
             </div>
           </div>
 
           <input name="name" placeholder={t('Full Name')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500 border-slate-200" required />
-          <input name="phone" placeholder={t('Phone Number')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500 border-slate-200" required />
-          <input name="email" type="email" placeholder={t('Email Address')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 border-slate-200 outline-none" required />
           <input name="age" type="number" placeholder={t('Age')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 border-slate-200 outline-none" required />
+          
+          {/* 📱 Phone & 📧 Email Side-by-Side */}
+          <input name="phone" placeholder={t('Phone Number')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500 border-slate-200" required />
+          <input name="email" type="email" placeholder={t('Email Address')} onChange={handleChange} className="p-4 border rounded-2xl bg-slate-50 border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500" required />
 
           {/* Location Grid */}
           <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-5 rounded-[2rem] border border-slate-200">
@@ -157,8 +151,20 @@ export default function Signup() {
           {/* 🩺 Doctor Fields */}
           {role === 'doctor' && (
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-4">
-              <input name="specialty" placeholder={t('Specialization')} onChange={handleChange} className="p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />
-              <input name="experience" type="number" placeholder={t('Experience')} onChange={handleChange} className="p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />
+              <div className="space-y-1">
+                <label className="text-[9px] uppercase text-emerald-600 ml-2 font-black italic">{t('Doctor Type / Specialty')}</label>
+                <select name="specialty" value={formData.specialty} onChange={handleChange} className="w-full p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none font-bold text-slate-700" required>
+                  <option value="">-- {t('Select Specialty')} --</option>
+                  <option value="General Physician">{t('doc_general')}</option>
+                  <option value="Cardiologist">{t('doc_cardio')}</option>
+                  <option value="Endocrinologist">{t('doc_endocrino')}</option>
+                  <option value="Dietitian/Nutritionist">{t('doc_nutrition')}</option>
+                  <option value="Gynecologist">{t('doc_gynae')}</option>
+                  <option value="Pediatrician">{t('doc_pedia')}</option>
+                  <option value="Ayush/Homeopathy">{t('doc_ayush')}</option>
+                </select>
+              </div>
+              <input name="experience" type="number" placeholder={t('Experience (Years)')} onChange={handleChange} className="p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />
               <input name="hospitalAddress" placeholder={t('Hospital Address')} onChange={handleChange} className="md:col-span-2 p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />
             </div>
           )}

@@ -1,12 +1,6 @@
-/**
- * useModel.js — HealthRisk ANN v3
- * 24 features — ONNX ONLY, no CDN imports, no TFLite CDN
- * Requires: npm install onnxruntime-web
- * Files needed in public/models/: health_risk.onnx, model_meta.json
- */
 import { useState, useCallback, useRef } from 'react';
 
-// ── Helpers ──────────────────────────────────────────────────────
+//Helpers
 export function calcAge(dob) {
   if (!dob) return 0;
   const birth = new Date(dob);
@@ -30,13 +24,7 @@ export function getRiskLevel(prob) {
   return                   { label: 'LOW',      color: '#69ff47', bg: '#69ff4722', emoji: '🟢' };
 }
 
-/**
- * 24 features in exact order matching model_meta.json:
- * age, gender, height, weight, bmi, wnh,
- * ap_hi, ap_lo, cholesterol, gluc, smoke, alco, active,
- * pulse_pressure, map, hypertension, stage2_htn,
- * age_chol, age_bmi, age_map, map_chol, pp_age, ap_hi_chol, bmi_chol
- */
+
 export function buildFeatures(formData, scaler) {
   const age    = calcAge(formData.dob);
   const gender = Number(formData.gender)      || 1;
@@ -94,7 +82,7 @@ export function getCalculatedValues(formData) {
   };
 }
 
-// ── Main Hook ────────────────────────────────────────────────────
+// Main Hook
 export function useModel() {
   const [status,    setStatus]    = useState('idle');
   const [modelType, setModelType] = useState(null);

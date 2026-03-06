@@ -105,7 +105,14 @@ export const resources = {
       "action_required": "Action Required",
       "system_normal": "System Normal",
       "last_visit": "Last Visit",
-      "vitals_summary": "Vitals Summary"
+      "vitals_summary": "Vitals Summary",
+      "doc_general": "General Physician",
+"doc_cardio": "Cardiologist (Heart Specialist)",
+"doc_endocrino": "Endocrinologist (Diabetes/Sugar)",
+"doc_nutrition": "Dietitian/Nutritionist (Obesity)",
+"doc_gynae": "Gynecologist (Female Health)",
+"doc_pedia": "Pediatrician (Child Specialist)",
+"doc_ayush": "AYUSH / Homeopathy Expert"
     }
   },
   hi: {
@@ -212,7 +219,14 @@ export const resources = {
       "action_required": "कार्रवाई आवश्यक",
       "system_normal": "स्वास्थ्य सामान्य",
       "last_visit": "पिछली जांच",
-      "vitals_summary": "वाइटल्स सारांश"
+      "vitals_summary": "वाइटल्स सारांश",
+      "doc_general": "सामान्य चिकित्सक (Physician)",
+"doc_cardio": "हृदय रोग विशेषज्ञ (Heart Specialist)",
+"doc_endocrino": "एंडोक्रिनोलॉजिस्ट (Diabetes Specialist)",
+"doc_nutrition": "आहार विशेषज्ञ (Nutritionist)",
+"doc_gynae": "स्त्री रोग विशेषज्ञ (Gynecologist)",
+"doc_pedia": "बाल रोग विशेषज्ञ (Pediatrician)",
+"doc_ayush": "आयुष / होम्योपैथी विशेषज्ञ"
     }
   },
   gu: {
@@ -319,8 +333,14 @@ export const resources = {
       "action_required": "તાત્કાલિક પગલાં જરૂરી",
       "system_normal": "આરોગ્ય સામાન્ય છે",
       "last_visit": "છેલ્લી મુલાકાત",
-      "vitals_summary": "વાઇટલ્સ સારાંશ"
-    
+      "vitals_summary": "વાઇટલ્સ સારાંશ",
+      "doc_general": "સામાન્ય ચિકિત્સક (General Physician)",
+"doc_cardio": "હૃદય રોગ નિષ્ણાત (Heart Specialist)",
+"doc_endocrino": "ડાયાબિટીસ અને સુગર નિષ્ણાત (Endocrinologist)",
+"doc_nutrition": "આહાર અને પોષણ નિષ્ણાત (Nutritionist)",
+"doc_gynae": "સ્ત્રી રોગ નિષ્ણાત (Gynecologist)",
+"doc_pedia": "બાળ રોગ નિષ્ણાત (Pediatrician)",
+"doc_ayush": "આયુષ / હોમિયોપેથી નિષ્ણાત"
   }
     }
   };

@@ -5,8 +5,8 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 import {
-  Plus, Trash2, ArrowLeft, Save, Search,
-  UserCheck, Activity, Heart, Wind, Droplets
+  Plus, Trash2, ArrowLeft, Save, Search, 
+  Activity, Heart, ShieldAlert, History
 } from 'lucide-react';
 
 const getRiskBoxClass = (risk) => {
@@ -31,6 +31,7 @@ export default function DoctorDashboard() {
   const fetchPatient = async (id) => {
     setLoading(true);
     try {
+      // Updated API route to match your app.py
       const res = await fetch(`http://localhost:5000/api/patient/${id}`);
       const data = await res.json();
       if (res.ok) {
@@ -56,39 +57,49 @@ export default function DoctorDashboard() {
     }
   };
 
-  const updateMed = (i, field, val) => {
-    const updated = [...medicines];
-    updated[i][field] = val;
-    setMedicines(updated);
-  };
-
   const savePrescription = async () => {
     const res = await fetch('http://localhost:5000/api/doctor/update-medicine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ aadhaar: patient.aadhaar, medicines }),
     });
-    if (res.ok) alert("Prescription Updated");
+    if (res.ok) alert("Prescription Updated & Synced with Medical Store");
   };
 
-  const risk = patient?.latest_vitals?.riskProbability || 0;
-  // Visit count calculation from history array
+  // 🚀 Logic to extract data from nested 'history' structure
+  const latestEntry = patient?.history?.[patient.history.length - 1] || {};
+  const vitals = latestEntry.vitals || {};
+  const results = latestEntry.results || {};
+  
+  // Calculate aggregate risk from AI results
+  const risk = Math.round(Math.max(
+    results.heart_attack?.probability || 0,
+    results.diabetes?.probability || 0,
+    results.obesity?.probability || 0
+  ) * 100);
+
   const visitCount = patient?.history?.length || 0;
 
+  // Format data for Recharts
+  const chartData = (patient?.history || []).map(entry => ({
+    date: entry.date,
+    glucose: parseFloat(entry.vitals?.glucose_mg),
+    ap_hi: parseFloat(entry.vitals?.ap_hi),
+    cholesterol: parseFloat(entry.vitals?.cholesterol_mg),
+    bmi: entry.vitals?.height > 0 ? (entry.vitals?.weight / Math.pow(entry.vitals?.height / 100, 2)).toFixed(1) : 0
+  }));
+
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="min-h-screen bg-slate-100 p-6 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
 
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-3 bg-white rounded-2xl shadow-sm"
-            >
+            <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-2xl shadow-sm hover:bg-slate-50 transition-all">
               <ArrowLeft size={22} />
             </button>
-            <img src="/logo.jpeg" className="h-12" />
-            <h1 className="text-2xl font-bold">GraminSetu</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tighter italic">Gramin<span className="text-emerald-600">Setu</span></h1>
           </div>
 
           <form onSubmit={handleSearch} className="relative w-full md:w-96">
@@ -96,106 +107,85 @@ export default function DoctorDashboard() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search Aadhaar..."
-              className="w-full p-4 pl-12 rounded-2xl border font-semibold text-base outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full p-4 pl-12 rounded-2xl border-2 border-transparent font-bold outline-none focus:border-emerald-500 bg-white shadow-sm transition-all"
             />
             <Search className="absolute left-4 top-4 text-slate-400" />
           </form>
         </div>
 
         {!patient ? (
-          <div className="bg-white p-20 rounded-3xl text-center">
-            <p className="text-slate-400 font-semibold">
-              {loading ? "Loading..." : "Search Patient Aadhaar"}
-            </p>
+          <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-slate-200">
+             <Search size={48} className="mx-auto text-slate-200 mb-4" />
+             <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">
+               {loading ? "Fetching Patient Data..." : "Enter 12-Digit Aadhaar to Start"}
+             </p>
           </div>
         ) : (
           <>
-            <div className="bg-white p-10 rounded-3xl shadow border-t-8 border-emerald-500">
-              <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold">{patient.name}</h1>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <p className="text-lg font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
-                      Aadhaar: <span className="text-slate-900 font-bold">{patient.aadhaar}</span>
-                    </p>
-                    {/* VISITS COUNT UI */}
-                    <p className="text-lg font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">
-                      Total Visits: <span className="font-bold">{visitCount}</span>
-                    </p>
+            {/* Patient Identity & Risk Box */}
+            <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border-t-[12px] border-emerald-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-[10rem] -z-10 opacity-50" />
+              
+              <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest">Live Patient</span>
+                     <span className="text-slate-300 font-bold">|</span>
+                     <span className="flex items-center gap-1 text-slate-400 text-[10px] font-bold uppercase"><History size={12}/> {visitCount} Visits Total</span>
                   </div>
+                  <h1 className="text-5xl font-black text-slate-900 tracking-tight">{patient.name}</h1>
+                  <p className="text-xl font-bold text-slate-400 italic">ID: {patient.aadhaar}</p>
                 </div>
 
-                <div
-                  className={`text-white p-6 rounded-3xl text-center min-w-[160px] ${getRiskBoxClass(risk)}`}
-                >
-                  <p className="text-xs uppercase tracking-widest font-semibold opacity-90">
-                    Risk Level
-                  </p>
-                  <p className="text-5xl font-bold">
-                    {risk}%
-                  </p>
+                <div className={`text-white p-8 rounded-[2.5rem] text-center min-w-[200px] shadow-2xl transform hover:scale-105 transition-transform ${getRiskBoxClass(risk)}`}>
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-black mb-2 opacity-80">AI Health Risk</p>
+                  <p className="text-6xl font-black leading-none">{risk}%</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-                <BigVitalBox label="BMI" val={patient.latest_vitals?.bmi} limit={25} unit="kg/m²" />
-                <BigVitalBox label="Glucose" val={patient.latest_vitals?.glucose} limit={140} unit="mg/dL" />
-                <BigVitalBox label="Cholesterol" val={patient.latest_vitals?.cholesterol} limit={200} unit="mg/dL" />
-                <BigVitalBox label="BP Sys" val={patient.latest_vitals?.ap_hi} limit={130} unit="mmHg" />
+              {/* Vitals Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+                <BigVitalBox label="BMI" val={chartData[chartData.length-1]?.bmi} limit={25} unit="kg/m²" />
+                <BigVitalBox label="Glucose" val={vitals.glucose_mg} limit={140} unit="mg/dL" />
+                <BigVitalBox label="Cholesterol" val={vitals.cholesterol_mg} limit={200} unit="mg/dL" />
+                <BigVitalBox label="Sys BP" val={vitals.ap_hi} limit={130} unit="mmHg" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Charts & Prescription Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
               <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
-                <ChartCard title="Glucose Trend" data={patient.history} k="glucose" limit={140} />
-                <ChartCard title="BP Trend" data={patient.history} k="ap_hi" limit={130} />
-                <ChartCard title="Cholesterol Trend" data={patient.history} k="cholesterol" limit={200} />
-                <ChartCard title="BMI Trend" data={patient.history} k="bmi" limit={25} />
+                <ChartCard title="Glucose Trend" data={chartData} k="glucose" limit={140} color="#10b981" />
+                <ChartCard title="Blood Pressure" data={chartData} k="ap_hi" limit={130} color="#3b82f6" />
+                <ChartCard title="Cholesterol" data={chartData} k="cholesterol" limit={200} color="#f59e0b" />
+                <ChartCard title="BMI History" data={chartData} k="bmi" limit={25} color="#8b5cf6" />
               </div>
 
-              <div className="bg-white p-8 rounded-3xl shadow">
-                <div className="flex justify-between mb-6">
-                  <h3 className="font-semibold uppercase text-sm tracking-widest">
-                    Prescription
-                  </h3>
-                  <button
-                    onClick={() => setMedicines([...medicines, { name: '', dosage: '' }])}
-                    className="p-2 bg-emerald-100 rounded-xl"
-                  >
-                    <Plus />
+              <div className="bg-white p-8 rounded-[3rem] shadow-xl h-fit border border-slate-100">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="font-black uppercase text-xs tracking-[0.2em] text-slate-400">Prescription</h3>
+                  <button onClick={() => setMedicines([...medicines, { name: '', dosage: '' }])} className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-emerald-600 transition-all">
+                    <Plus size={20} />
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {medicines.map((m, i) => (
-                    <div key={i} className="flex gap-2 items-center bg-slate-50 p-4 rounded-2xl">
-                      <div className="flex-1">
-                        <input
-                          value={m.name}
-                          onChange={e => updateMed(i, 'name', e.target.value)}
-                          placeholder="Medicine"
-                          className="w-full bg-transparent font-semibold outline-none"
-                        />
-                        <input
-                          value={m.dosage}
-                          onChange={e => updateMed(i, 'dosage', e.target.value)}
-                          placeholder="Dosage"
-                          className="w-full text-sm text-slate-500 bg-transparent outline-none"
-                        />
+                    <div key={i} className="group flex gap-3 items-center bg-slate-50 p-5 rounded-[2rem] border-2 border-transparent hover:border-emerald-100 transition-all">
+                      <div className="flex-1 space-y-1">
+                        <input value={m.name} onChange={e => { const u=[...medicines]; u[i].name=e.target.value; setMedicines(u); }} placeholder="Medicine Name" className="w-full bg-transparent font-black text-slate-800 outline-none placeholder:text-slate-300" />
+                        <input value={m.dosage} onChange={e => { const u=[...medicines]; u[i].dosage=e.target.value; setMedicines(u); }} placeholder="Dosage (e.g. 1-0-1)" className="w-full text-[10px] font-bold text-emerald-600 bg-transparent outline-none uppercase tracking-widest" />
                       </div>
-                      <Trash2
-                        className="text-slate-400 cursor-pointer hover:text-red-500"
-                        onClick={() => setMedicines(medicines.filter((_, idx) => idx !== i))}
-                      />
+                      <button onClick={() => setMedicines(medicines.filter((_, idx) => idx !== i))} className="p-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   ))}
+                  {medicines.length === 0 && <p className="text-center py-10 text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">No active medications</p>}
                 </div>
 
-                <button
-                  onClick={savePrescription}
-                  className="w-full mt-6 py-4 bg-slate-900 text-white rounded-2xl font-semibold hover:bg-slate-800 transition-colors"
-                >
-                  <Save className="inline mr-2" /> Save Prescription
+                <button onClick={savePrescription} className="w-full mt-8 py-5 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] hover:bg-slate-900 shadow-lg shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-3">
+                  <Save size={20} /> Save Changes
                 </button>
               </div>
             </div>
@@ -206,62 +196,36 @@ export default function DoctorDashboard() {
   );
 }
 
+// Sub-components for cleaner code
 function BigVitalBox({ label, val, limit, unit }) {
-  const high = val > limit;
+  const isHigh = parseFloat(val) > limit;
   return (
-    <div className={`p-6 rounded-3xl border transition-all ${high ? 'bg-red-600 text-white border-red-700 shadow-lg' : 'bg-white border-slate-100'}`}>
-      <p className={`text-xs uppercase tracking-widest font-semibold ${high ? 'opacity-80' : 'text-slate-400'}`}>{label}</p>
-      <p className="text-4xl font-bold">{val || 0}</p>
-      <p className="text-sm opacity-70">{unit}</p>
+    <div className={`p-8 rounded-[2rem] border-2 transition-all ${isHigh ? 'bg-red-50 border-red-100 text-red-700' : 'bg-slate-50 border-slate-50 text-slate-800'}`}>
+      <p className="text-[9px] uppercase tracking-[0.2em] font-black opacity-60 mb-1">{label}</p>
+      <div className="flex items-baseline gap-1">
+         <span className="text-3xl font-black">{val || '--'}</span>
+         <span className="text-[10px] font-bold opacity-60 uppercase">{unit}</span>
+      </div>
     </div>
   );
 }
 
-function ChartCard({ title, data, k, limit }) {
-  const [selected, setSelected] = useState(null);
-
+function ChartCard({ title, data, k, limit, color }) {
   return (
-    <div className="bg-white p-6 rounded-3xl shadow">
-      <p className="text-xs uppercase tracking-widest font-semibold mb-4 text-slate-400">{title}</p>
-
-      <div className="h-48">
+    <div className="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-50">
+      <p className="text-[10px] uppercase tracking-[0.2em] font-black mb-6 text-slate-400">{title}</p>
+      <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis hide />
-            <YAxis hide />
-            <Tooltip 
-               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            />
-            <ReferenceLine y={limit} stroke="#ef4444" strokeDasharray="5 5" />
-            <Line
-              dataKey={k}
-              stroke="#10b981"
-              strokeWidth={4}
-              dot={({ cx, cy, payload }) => (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={6}
-                  fill="#10b981"
-                  stroke="#fff"
-                  strokeWidth={2}
-                  className="cursor-pointer"
-                  onClick={() => setSelected(payload)}
-                />
-              )}
-              activeDot={{ r: 8 }}
-            />
+            <XAxis dataKey="date" hide />
+            <YAxis domain={['auto', 'auto']} hide />
+            <Tooltip contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontWeight: '900' }} />
+            <ReferenceLine y={limit} stroke="#fda4af" strokeDasharray="8 8" />
+            <Line type="monotone" dataKey={k} stroke={color} strokeWidth={5} dot={{ r: 6, fill: color, strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 10 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      {selected && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-sm font-semibold text-emerald-800">
-          <p>Visit Date: <span className="font-bold">{selected.date}</span></p>
-          <p>Health Value: <span className="font-bold">{selected[k]}</span></p>
-        </div>
-      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
             
   optimizeDeps: {
-    exclude: ['onnxruntime-web', '@tensorflow/tfjs-tflite'] // 👈 Inhe bundle mat karo
+    exclude: ['onnxruntime-web', '@tensorflow/tfjs-tflite'] 
   },
-  // No extra headers, no extra copy logic
+  
 })

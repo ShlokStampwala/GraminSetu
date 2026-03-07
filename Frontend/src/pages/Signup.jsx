@@ -163,6 +163,17 @@ export default function Signup() {
                   <option value="Pediatrician">{t('doc_pedia')}</option>
                   <option value="Ayush/Homeopathy">{t('doc_ayush')}</option>
                 </select>
+
+                 <input
+                 name="hospitalTiming"
+                 placeholder={t('Hospital Timing (Ex: 9AM - 5PM)')}
+                 onChange={handleChange}
+
+                 className="md:col-span-2 p-4  border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none "
+                 required
+                 />
+
+
               </div>
               <input name="experience" type="number" placeholder={t('Experience (Years)')} onChange={handleChange} className="p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />
               <input name="hospitalAddress" placeholder={t('Hospital Address')} onChange={handleChange} className="md:col-span-2 p-4 border rounded-2xl bg-emerald-50/30 border-emerald-100 outline-none" required />

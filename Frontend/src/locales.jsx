@@ -112,7 +112,20 @@ export const resources = {
 "doc_nutrition": "Dietitian/Nutritionist (Obesity)",
 "doc_gynae": "Gynecologist (Female Health)",
 "doc_pedia": "Pediatrician (Child Specialist)",
-"doc_ayush": "AYUSH / Homeopathy Expert"
+"doc_ayush": "AYUSH / Homeopathy Expert",
+"recommended_diagnostics": "Recommended Diagnostic Reports",
+"nearby_specialists": "Recommended Specialists Nearby",
+"overall_risk": "Overall AI Health Score",
+"action_required": "Action Required",
+"system_normal": "Healthy / Normal",
+"Cardiovascular Tests": "Cardiovascular Tests",
+"Metabolic Tests": "Metabolic Tests",
+"Sugar Monitoring": "Sugar Monitoring",
+"ECG (Electrocardiogram)": "ECG (Electrocardiogram)",
+"Lipid Profile (HDL/LDL)": "Lipid Profile (HDL/LDL)",
+"HbA1c (Gold Standard)": "HbA1c (Gold Standard)",
+"Fasting Blood Sugar": "Fasting Blood Sugar",
+"Urine Microalbumin": "Urine Microalbumin (Kidney Function)"
     }
   },
   hi: {
@@ -226,7 +239,20 @@ export const resources = {
 "doc_nutrition": "आहार विशेषज्ञ (Nutritionist)",
 "doc_gynae": "स्त्री रोग विशेषज्ञ (Gynecologist)",
 "doc_pedia": "बाल रोग विशेषज्ञ (Pediatrician)",
-"doc_ayush": "आयुष / होम्योपैथी विशेषज्ञ"
+"doc_ayush": "आयुष / होम्योपैथी विशेषज्ञ",
+"recommended_diagnostics": "अनुशंसित डायग्नोस्टिक रिपोर्ट",
+"nearby_specialists": "नजदीकी विशेषज्ञ डॉक्टर",
+"overall_risk": "कुल एआई हेल्थ स्कोर",
+"action_required": "कार्रवाई आवश्यक",
+"system_normal": "स्वास्थ्य सामान्य है",
+"Cardiovascular Tests": "हृदय संबंधी जांच",
+"Metabolic Tests": "मेटाबॉलिक जांच",
+"Sugar Monitoring": "शुगर की निगरानी",
+"ECG (Electrocardiogram)": "ईसीजी (हृदय की जांच)",
+"Lipid Profile (HDL/LDL)": "लिपिड प्रोफाइल (कोलेस्ट्रॉल)",
+"HbA1c (Gold Standard)": "HbA1c (शुगर की जांच)",
+"Fasting Blood Sugar": "खाली पेट शुगर की जांच",
+"Urine Microalbumin": "यूरीन माइक्रोएल्ब्यूमिन (किडनी फंक्शन)"
     }
   },
   gu: {
@@ -340,7 +366,21 @@ export const resources = {
 "doc_nutrition": "આહાર અને પોષણ નિષ્ણાત (Nutritionist)",
 "doc_gynae": "સ્ત્રી રોગ નિષ્ણાત (Gynecologist)",
 "doc_pedia": "બાળ રોગ નિષ્ણાત (Pediatrician)",
-"doc_ayush": "આયુષ / હોમિયોપેથી નિષ્ણાત"
+"doc_ayush": "આયુષ / હોમિયોપેથી નિષ્ણાત",
+"recommended_diagnostics": "ભલામણ કરેલ ડાયગ્નોસ્ટિક રિપોર્ટ્સ",
+"nearby_specialists": "નજીકના નિષ્ણાત ડોકટરો",
+"overall_risk": "કુલ AI હેલ્થ સ્કોર",
+"action_required": "તાત્કાલિક ધ્યાન જરૂરી",
+"system_normal": "તબિયત સામાન્ય છે",
+"Cardiovascular Tests": "હૃદય સંબંધિત તપાસ",
+"Metabolic Tests": "મેટાબોલિક તપાસ",
+"Sugar Monitoring": "સુગર મોનિટરિંગ",
+"ECG (Electrocardiogram)": "ECG (હૃદયના ધબકારાની તપાસ)",
+"Lipid Profile (HDL/LDL)": "લિપિડ પ્રોફાઇલ (કોલેસ્ટ્રોલ)",
+"HbA1c (Gold Standard)": "HbA1c (ત્રણ મહિનાની સુગરની તપાસ)",
+"Fasting Blood Sugar": "ભૂખ્યા પેટે સુગરની તપાસ",
+"Urine Microalbumin": " યુરીન માઇક્રોએલ્બ્યુમિન (કિડની ફંક્શન)"
+
   }
     }
   };

@@ -34,17 +34,30 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // ── Store user data for EVERY role ──────────────────────
         if (role === 'asha') {
+          // ASHA: password bhi cache karo (offline login ke liye)
           localStorage.setItem('asha_user_data', JSON.stringify({ ...data.user, password: formData.password }));
         }
-        
-        // Final Redirection Logic
+
+        if (role === 'doctor') {
+          // ✅ FIX: Doctor ka naam, specialty sab store karo
+          localStorage.setItem('doctor_user_data', JSON.stringify(data.user));
+        }
+
+        if (role === 'medical') {
+          localStorage.setItem('medical_user_data', JSON.stringify(data.user));
+        }
+
+        // Common flags
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('role', role);
 
-        if (role === 'asha') navigate('/dashboard');
-        else if (role === 'doctor') navigate('/doctor/dashboard');
-        else if (role === 'medical') navigate('/medical/dashboard'); // New Role Path
+        // Redirect
+        if (role === 'asha')    navigate('/dashboard');
+        else if (role === 'doctor')  navigate('/doctor/dashboard');
+        else if (role === 'medical') navigate('/medical/dashboard');
+
       } else {
         alert(data.message);
       }
@@ -95,7 +108,7 @@ export default function Login() {
                 </div>
               </button>
 
-              {/* MEDICAL STORE [NEW ROLE] */}
+              {/* MEDICAL STORE */}
               <button 
                 onClick={() => setRole('medical')}
                 className="flex items-center justify-between p-4 border-2 border-slate-100 rounded-2xl hover:border-amber-500 hover:bg-amber-50 transition-all group"

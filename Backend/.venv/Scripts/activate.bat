@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=D:\Hackathons\Innovation_DAIICT\Code_frontend_designed_by_ny\Backend\.venv
+set VIRTUAL_ENV=D:\Hackathons\CVMU 4.0\GraminSetu_FInal\backend\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

@@ -295,7 +295,7 @@ Team Members:
 
 - Shlok – Mern Stack--------------|
 - Nisha - Mern Stack Developer--|---- (Work Together IN DL Model(ONNX,Tflite))
-- Sujal - Mern Stack--------------|
+- Sujal - Mern Stack---------------|
 ---
 
 # 📜 License

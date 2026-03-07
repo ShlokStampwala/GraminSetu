@@ -293,9 +293,9 @@ Developed as part of an **MBIT Innovation Initiative**.
 
 Team Members:
 
-- Shlok – Mern Stack------------|
+- Shlok – Mern Stack--------------|
 - Nisha - Mern Stack Developer--|---- (Work Together IN DL Model(ONNX,Tflite))
-- Sujal - Mern Stack------------|
+- Sujal - Mern Stack--------------|
 ---
 
 # 📜 License
